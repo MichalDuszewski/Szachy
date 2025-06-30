@@ -2,11 +2,11 @@
 
 ## Description
 
-This program runs on both Windows and Linux systems.  
-It requires Python version 3 to work.
+Basic local 2 player chess app. Supports all standard rules, including promotion and en passant, as well as draw by agreement, threefold repetition and stalemate.
 
 ## Requirements
 
+- Windows/Linux
 - Python 3.x
 
 ## Additional requirements for Linux
