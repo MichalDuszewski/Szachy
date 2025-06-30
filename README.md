@@ -11,8 +11,7 @@ Basic local 2 player chess app. Supports all standard rules, including promotion
 
 ## Additional requirements for Linux
 
-On Linux systems, the `tkinter` module must be installed separately,  
-because it is not included with the standard Python library on most Linux distributions.
+On Linux systems, the `tkinter` module must be installed separately, as it is not included with the standard Python library on most Linux distributions.
 
 To install `tkinter` on Ubuntu/Debian, run the following commands:
 
