@@ -1,0 +1,4 @@
+#define transparent_bitmap_width 2
+#define transparent_bitmap_height 2
+static unsigned char transparent_bitmap_bits[] = {
+   0x00, 0x00 };
