@@ -1,10 +1,92 @@
 from tkinter import Tk, Canvas, PhotoImage, Button
 import os
 
+window_width = 1300
+window_height = 1000
 window = Tk()
-window.geometry("1300x1000")
-c = Canvas(window, width = 1300, height = 1000)
-c.pack()
+
+#Scaling
+screen_width = window.winfo_screenwidth()
+screen_height = window.winfo_screenheight()
+screen_too_small = ((screen_width < window_width) or (screen_height < window_height))
+
+if screen_too_small:
+    scale = 2
+else:
+    scale = False
+
+if scale:
+    window_width = int(window_width / 2)
+    window_height = int(window_height / 2)
+
+#Button scaling
+scaler = 1
+if scale:
+    scaler = 2
+
+button_width = 10
+button_height = 2
+
+button_font_size = 20
+if scale: 
+    button_font_size = 10
+
+
+window.geometry(f"{window_width}x{window_height}")
+c = Canvas(window, width = window_width, height = window_height)
+c.pack(fill = "both", expand = True)
+
+original_create_rectangle = Canvas.create_rectangle
+original_create_text = Canvas.create_text
+original_create_image = Canvas.create_image
+original_photo_image = PhotoImage
+original_button_place = Button.place
+
+def scale_photo_image(*args, **kwargs):
+    image = original_photo_image(*args, **kwargs)
+    if scale:
+        scaled_image = image.subsample(scale)
+        return scaled_image
+    return image
+
+
+def scale_coords(*coords):
+    scaled = []
+    for i in coords:
+        if isinstance(i, (int, float)) and scale:
+            scaled.append(i / scale)
+        elif isinstance(i, tuple) and scale:
+            for j in i:
+                if isinstance(j, (int, float)):
+                    scaled.append(j / scale)
+        else:
+            # Probably an object like Canvas or something else — keep as is
+            scaled.append(i)
+    return scaled
+
+def scale_coords_and_image(*args, **kwargs):
+    scaled_coords = scale_coords(*args)
+    return original_create_image(*scaled_coords, **kwargs)
+
+Canvas.create_rectangle = lambda *args, **kwargs: \
+    original_create_rectangle(*scale_coords(*args), **kwargs)
+
+Canvas.create_text = lambda *args, **kwargs: \
+    original_create_text(*scale_coords(*args), **kwargs)
+
+Canvas.create_image = scale_coords_and_image
+
+PhotoImage = scale_photo_image
+
+Button.place = lambda self, *args, **kwargs: original_button_place(
+    self,
+    *args,
+    **{
+        **kwargs,
+        'x': scale_coords(kwargs['x']),
+        'y': scale_coords(kwargs['y']),
+    }
+)
 
 class square(object):
     def __init__(self, canvas_x, canvas_y, piece, piece_color, x, y, name):
@@ -671,7 +753,6 @@ class square(object):
         currently_clicked_square.hide_moves()
         currently_clicked_square = temp_currently_clicked_square
         is_any_square_clicked = True
-
         promotion_background = c.create_rectangle(self.canvas_x, self.canvas_y, self.canvas_x + rect_height, self.canvas_y + rect_width, 
                                                   fill = "white", tag = "promotion_background")
         match pawns_color:
@@ -892,6 +973,10 @@ def piece_layout_update():
             continue
         canvas_x, canvas_y = instance_of_a_square.get_coords()
         image_of_a_piece = PhotoImage(file = os.path.join(scriptdir, f"{piece}.png"))
+        #global scale
+        #factor = scale
+        #if factor:
+        #    image_of_a_piece = image_of_a_piece.subsample(factor)
         list_of_images.append(image_of_a_piece)
         square_name = instance_of_a_square.get_name()
         c.create_image(canvas_x, canvas_y, image = image_of_a_piece, anchor = "nw")
@@ -932,8 +1017,9 @@ def play_again():
 
 def create_play_again_button():
     global play_again_button
-    play_again_button = Button(c, width = '20', height = '2', background = "Brown", font = ("Times new roman", 20), text = "Play again?", command = play_again)
-    play_again_button.place(x = 350, y = 901)
+    play_again_button = Button(c, width = button_width, height = button_height, background = "Brown", 
+                               font = ("Times new roman", button_font_size), text = "Play again?", command = play_again)
+    play_again_button.place(x = 425, y = 901)
 
 def win_text(color):
     white_resign_button.destroy()
@@ -943,14 +1029,14 @@ def win_text(color):
     elif color == "Black":
         opposite_color = "White"
     text_background = c.create_rectangle(300, 400, 700, 600, fill = opposite_color)
-    white_win_text = c.create_text(500, 500, fill = color, text = f"{color} wins!", font = ("Times new roman", 50, "bold"), anchor = "center")
+    white_win_text = c.create_text(500, 500, fill = color, text = f"{color} wins!", font = ("Times new roman", int(50 / scaler), "bold"), anchor = "center")
     destroy_all_buttons()
     create_play_again_button()
 
 def draw_text(reason):
     global current_player
     text_background = c.create_rectangle(100, 400, 900, 600, fill = "White")
-    white_win_text = c.create_text(500, 500, fill = "Black", text = f"Draw by {reason}", font = ("Times new roman", 45, "bold"), anchor = "center")
+    white_win_text = c.create_text(500, 500, fill = "Black", text = f"Draw by {reason}", font = ("Times new roman", int(45 / scaler), "bold"), anchor = "center")
     current_player = None
     destroy_all_buttons()
     create_play_again_button()
@@ -963,21 +1049,21 @@ def black_resign():
 
 def create_white_draw_offer_button():
     global white_draw_offer_button
-    white_draw_offer_button = Button(c, width = '10', height = '2', background = "white", foreground = "black",
-                                    font = ("Times new roman", 20), text = "Offer draw", command = create_black_accept_draw_button)
+    white_draw_offer_button = Button(c, width = button_width, height = button_height, background = "white", foreground = "black",
+                                    font = ("Times new roman", button_font_size), text = "Offer draw", command = create_black_accept_draw_button)
     white_draw_offer_button.place(x = 1120, y = 800)
 
 def create_black_draw_offer_button():
     global black_draw_offer_button
-    black_draw_offer_button = Button(c, width = '10', height = '2', background = "black", foreground = "white",
-                                    font = ("Times new roman", 20), text = "Offer draw", command = create_white_accept_draw_button)
+    black_draw_offer_button = Button(c, width = button_width, height = button_height, background = "black", foreground = "white",
+                                    font = ("Times new roman", button_font_size), text = "Offer draw", command = create_white_accept_draw_button)
     black_draw_offer_button.place(x = 1120, y = 100)
 
 def create_white_accept_draw_button():
     black_draw_offer_button.destroy()
     global white_accept_draw_button
-    white_accept_draw_button = Button(c, width = '10', height = '2', background = "white", foreground = "black",
-                                    font = ("Times new roman", 20), text = "Accept draw?", command = accept_draw_offer)
+    white_accept_draw_button = Button(c, width = button_width, height = button_height, background = "white", foreground = "black",
+                                    font = ("Times new roman", button_font_size), text = "Accept draw?", command = accept_draw_offer)
     white_accept_draw_button.place(x = 1120, y = 800)
     global white_accept_draw_flag
     white_accept_draw_flag = 1
@@ -985,8 +1071,8 @@ def create_white_accept_draw_button():
 def create_black_accept_draw_button():
     white_draw_offer_button.destroy()
     global black_accept_draw_button
-    black_accept_draw_button = Button(c, width = '10', height = '2', background = "black", foreground = "white",
-                                    font = ("Times new roman", 20), text = "Accept draw?", command = accept_draw_offer)
+    black_accept_draw_button = Button(c, width = button_width, height = button_height, background = "black", foreground = "white",
+                                    font = ("Times new roman", button_font_size), text = "Accept draw?", command = accept_draw_offer)
     black_accept_draw_button.place(x = 1120, y = 100)
     global black_accept_draw_flag
     black_accept_draw_flag = 1
@@ -1219,9 +1305,6 @@ def play():
 
 
 
-    #to jakbym zapomniał jak robić obrazki xd
-    #c.create_image(100, 100, image = black_bishop, anchor = "nw", tags = "black_bishop")
-
     #As the pieces are placed on and cover squares, and linking a piece to a square it's on would be a daunting task, 
     #I'm creating an invisible rectangle on top of each square
     transparent_rect_a1 = c.create_rectangle(100, 800, 100 + rect_width, 800 + rect_height, fill = "gray", stipple = f"@{bitmap_path}", width = 0, tags = "rect_a1")
@@ -1307,11 +1390,11 @@ def play():
     create_black_draw_offer_button()
 
     global white_resign_button, black_resign_button
-    white_resign_button = Button(c, width = '10', height = '2', background = "white", foreground = "black",
-                            font = ("Times new roman", 20), text = "Resign", command = white_resign)
+    white_resign_button = Button(c, width = button_width, height = button_height, background = "white", foreground = "black",
+                            font = ("Times new roman", button_font_size), text = "Resign", command = white_resign)
     white_resign_button.place(x = 920, y = 800)
-    black_resign_button = Button(c, width = '10', height = '2', background = "black", foreground = "white",
-                            font = ("Times new roman", 20), text = "Resign", command = black_resign)
+    black_resign_button = Button(c, width = button_width, height = button_height, background = "black", foreground = "white",
+                            font = ("Times new roman", button_font_size), text = "Resign", command = black_resign)
     black_resign_button.place(x = 920, y = 100)
 
     global current_list_of_images
