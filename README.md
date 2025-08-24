@@ -32,4 +32,4 @@ sudo apt install python3-tk
         python3 Szachy.py
 
 
-Note: On Windows, you may need to use python instead of python3.
+Note: On Windows, you may need to use "python" instead of "python3".
