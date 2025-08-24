@@ -1,6 +1,5 @@
 from tkinter import Tk, Canvas, PhotoImage, Button
 import os
-import sys
 
 window = Tk()
 window.geometry("1300x1000")
