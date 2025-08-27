@@ -8,6 +8,7 @@ Basic local 2 player chess app. Supports all standard rules, including promotion
 
 - Windows/Linux
 - Python 3.x
+- No external dependencies (standard library only)
 
 ## Additional requirements for Linux
 
